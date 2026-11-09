@@ -1,32 +1,71 @@
-# React + TypeScript + Vite
+# Problem Organizer
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+悩みや困りごとを書き出し、AIと一緒に課題を整理するためのWebアプリです。AIが一方的に正解を決めるのではなく、ユーザー自身が課題や提案を確認・編集し、次の行動を選ぶことを支援します。
 
-Currently, two official plugins are available:
+## 主な機能
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- 悩みを入力し、希望する支援（話を聞いてほしい、課題を整理したい、次の行動を考えたい）を選んでAIに分析を依頼
+- AIの応答を、要約や個別の課題などの構造化された形式で表示
+- 課題の内容・状態・メモを編集
+- 相談履歴をブラウザ内のIndexedDBに保存し、一覧表示・編集・削除
+- 相談内容をMarkdownファイルとして出力
+- 相談履歴をJSON形式でバックアップ・復元
 
-## React Compiler
+## 技術構成
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React
+- TypeScript
+- Vite
+- Dexie（IndexedDB）
+- Zod（データの検証）
+- 外部LLM API（サーバー側の中継処理を経由）
 
-## Expanding the Oxlint configuration
+アプリ内のデータは構造化オブジェクトとして扱います。AIとの通信やバックアップではJSONを使い、Markdownは外部出力形式として生成します。
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## データとプライバシー
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+- 相談履歴はブラウザのIndexedDBに保存します。アプリ独自の履歴保存サーバーは使用しません。
+- ブラウザのデータ消去、端末の故障などで履歴が失われる可能性があります。必要に応じてJSONバックアップを作成してください。
+- AI分析を依頼すると、入力した相談内容は中継処理を通じて外部LLMサービスへ送信されます。
+- APIキーはブラウザ側に含めず、サーバー側で管理します。
+- 中継処理では、相談本文やAIの回答をアプリ側で永続保存・ログ出力しない設計です。ただし、ホスティング事業者やLLM提供者のログ・データ保持条件は別途適用されます。
+- 履歴の削除機能で削除できるのは、このアプリが管理するブラウザ内のデータです。外部サービス側のログを削除するものではありません。
+
+AIの応答は、専門家による診断や治療の代わりではありません。内容を確認し、自分に合わない提案は編集または利用しないでください。
+
+## 開発環境
+
+### 必要なもの
+
+- Node.js（使用するViteのバージョンが要求するバージョン）
+- npm
+
+### 起動方法
+
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Viteが表示するURLをブラウザで開いてください。
+
+### ビルドとチェック
+
+```bash
+npm run build
+npm run lint
+```
+
+## AI中継処理について
+
+AI APIの認証情報を安全に管理するため、フロントエンドからLLM提供者を直接呼び出さず、サーバー側の中継処理を利用します。中継処理はリクエストと応答を検証し、相談内容をログ出力・永続保存しないように構成してください。利用するLLMサービスやホスティング環境に応じた設定・起動方法は、それぞれの環境で管理します。
+
+## 今後の展開候補
+
+- 日常的な利用を通じた画面や履歴管理の改善
+- 必要に応じたPWA化
+- CapacitorによるAndroid／iOSアプリ化
+- 必要に応じたデスクトップアプリ化
+- Markdown出力を基盤にしたObsidian連携
+
+端末内の履歴は端末間で自動同期されません。別の端末へ移す場合は、JSONバックアップなどを利用してください。
